@@ -80,11 +80,11 @@ def jugar(paredes, cajas, objetivos, jugador, maximos_movimientos):
                     if action == 'izquierda':
                         caja_x -= 1
                     
-                    caja = tuple(caja_x, caja_y)
+                    nueva_posicion_caja = (caja_x, caja_y)
 
-                # ver si se puede quitar caja asi
-                # cajas.remove(caja)
-                # cajas.add(caja)
+                    #CREAR LISTA NUEVA PARA IR AGREGANDO LAS CAJAS 
+                    cajas.remove(caja)
+                    cajas.add(caja)
 
             maximos_movimientos = maximos_movimientos -1
 
