@@ -1,3 +1,4 @@
+
 from simpleai.search import (
     SearchProblem,
     breadth_first,
@@ -13,8 +14,7 @@ from simpleai.search.viewers import WebViewer, BaseViewer
 
 def jugar(paredes, cajas, objetivos, jugador, maximos_movimientos):
 
-    # (listado coordenadas cajas, listado coordenadas objetivos, posicion jugador, cantidad de movimientos máximos)
-    INITIAL = (cajas, objetivos, jugador, maximos_movimientos)
+    
     
     # coordenadas paredes
     PAREDES = paredes
@@ -42,6 +42,11 @@ def jugar(paredes, cajas, objetivos, jugador, maximos_movimientos):
         return [list(x) for x in tuplas]
 
     def neighbor_finder(coordinate, action):
+        for cordenada in PAREDES:
+            if coordinate==cordenada:
+                return None
+            
+        
         coordinate_x, coordinate_y = coordinate
         neighbors = []
 
@@ -58,7 +63,8 @@ def jugar(paredes, cajas, objetivos, jugador, maximos_movimientos):
             return up
         if down not in PAREDES and action == "abajo":
             return down
-
+    # (listado coordenadas cajas, listado coordenadas objetivos, posicion jugador, cantidad de movimientos máximos)
+    INITIAL = (list_to_tuple(cajas), list_to_tuple(objetivos), jugador, maximos_movimientos)
     class SokobanProblem(SearchProblem):
         def cost(self, state1, action, state2):
             return 1
@@ -77,16 +83,16 @@ def jugar(paredes, cajas, objetivos, jugador, maximos_movimientos):
             for action in ACTIONS:
                 # Buscar celda adyacente. Celda adyacente es la nueva posicion del jugador.
                 celda_adyacente = neighbor_finder(jugador, action)
+                if celda_adyacente != None:
+                    # Si hay una caja en la nueva posicion del jugador, hay que ver que no haya otra caja pegada.
+                    if celda_adyacente in cajas:
+                        # Buscar la adyacente de la nueva posicion del jugador, esta celda 2 nos va a ayudar a ver si habia 2 cajas seguidas.
+                        celda_adyacente_2 = neighbor_finder(celda_adyacente, action)
 
-                # Si hay una caja en la nueva posicion del jugador, hay que ver que no haya otra caja pegada.
-                if celda_adyacente in cajas:
-                    # Buscar la adyacente de la nueva posicion del jugador, esta celda 2 nos va a ayudar a ver si habia 2 cajas seguidas.
-                    celda_adyacente_2 = neighbor_finder(celda_adyacente, action)
-
-                    if not celda_adyacente_2 in cajas:
+                        if not celda_adyacente_2 in cajas:
+                            acciones_disponibles.append(action)
+                    else: # este else es cuando se mueve jugador sin generar movimiento de caja.
                         acciones_disponibles.append(action)
-                else: # este else es cuando se mueve jugador sin generar movimiento de caja.
-                    acciones_disponibles.append(action)
 
             return acciones_disponibles
 
@@ -95,7 +101,7 @@ def jugar(paredes, cajas, objetivos, jugador, maximos_movimientos):
 
             nueva_posicion_jugador = neighbor_finder(jugador, action)
             cajas_nuevas = []
-            objetivos_nuevos = tuple_to_list(objetivos)
+            objetivos_nuevos = []
             
             if nueva_posicion_jugador in cajas:
                 nueva_posicion_caja = neighbor_finder(nueva_posicion_jugador, action)
@@ -107,11 +113,16 @@ def jugar(paredes, cajas, objetivos, jugador, maximos_movimientos):
 
                         # Si la nueva posicion esta en un objetivo, lo eliminamos de la lista de objetivos.
                         if nueva_posicion_caja in OBJETIVOS:
-                            objetivos_nuevos.remove(nueva_posicion_caja)
+                            for objetivos_n in objetivos:
+                                if objetivos_n != nueva_posicion_caja:
+                                 objetivos_nuevos.append(objetivos_n)
 
                         # Si la vieja posicion estaba en un objetivo, lo agregamos de la lista de objetivos.
                         if caja in OBJETIVOS:
-                            objetivos_nuevos.append(caja)
+                            for objetivos_n in OBJETIVOS:
+                                if objetivos_n == caja:
+                                 objetivos_nuevos.append(caja)
+                                 objetivos_nuevos = objetivos_nuevos + objetivos
 
                     else: # Agregamos la caja que no fue modificada.
                         cajas_nuevas.append(caja)
@@ -124,3 +135,66 @@ def jugar(paredes, cajas, objetivos, jugador, maximos_movimientos):
         def heuristic(self, state):
             cajas, objetivos, jugador, maximos_movimientos = state
             return len(objetivos)
+    
+    problema = SokobanProblem(INITIAL)
+    solucion = astar(problema)
+
+    Result = []
+    solucion = list_to_tuple(solucion)
+    for accion in solucion.path():
+        if accion[0] is not None:
+            accion = tuple_to_list(accion)
+            Result.append(accion)
+
+    return Result
+    # if __name__ == "__main__":
+    #     viewer = BaseViewer()
+    #     #result = depth_first(MisionerosProblem(INICIAL), graph_search=True, viewer=viewer)
+    #     #result = breadth_first(MisionerosProblem(INICIAL), graph_search=True, viewer=viewer)
+    #     result = astar(SokobanProblem(INITIAL))
+    #     solution = []
+    #     for action, state in result.path():
+    #         if (action is not None):
+    #             solution.append(action)
+
+    # return solution
+
+# paredes=[
+#     (0, 0),
+#     (0, 1),
+#     (0, 2),
+#     (0, 3),
+#     (0, 4),
+#     (0, 5),
+#     (1, 0),
+#     (1, 5),
+#     (2, 0),
+#     (2, 5),
+#     (3, 0),
+#     (3, 5),
+#     (4, 0),
+#     (4, 5),
+    
+#     (4, 1),
+#     (4, 2),
+#     (4, 3),
+#     (4, 4),
+
+# ]
+
+# cajas=[
+    
+#     (2, 3)
+    
+# ]
+
+# objetivos=[
+    
+#     (1, 3)
+
+# ]
+
+# jugador=(3, 3)
+# maximos_movimientos=100
+# result = jugar(paredes,cajas,objetivos,jugador,maximos_movimientos)
+# print(result)
